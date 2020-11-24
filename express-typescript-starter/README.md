@@ -15,7 +15,7 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 ## Disclaimer
 
 This README is heavily biased per the present knowledge and preferences of the author, and is subjected to changes over time. Users are requested to do their own research.
-Also, the setup is done keeping Windows in mind.
+The setup is done keeping Windows in mind.
 
 ## Table Of Contents
 
@@ -25,4 +25,23 @@ Also, the setup is done keeping Windows in mind.
 4. Adding Jest and supertest to it
 5. Adding mongoose to it
 
-### SETTING UP TYPESCRIPT WITH EXPRESS
+### 1. SETTING UP TYPESCRIPT WITH EXPRESS
+
+> **PRE-REQUISITE**
+> Creating a *New Folder*, navigating into it & running ``npm init``
+
+The first step, as evidenced by the title is to setup typescript with express in our project.
+The goal is to have a ``GET /`` route as a *health check.*
+Let's install the dependencies right away:
+
+```javascript
+npm i express;
+```
+
+```javascript
+npm i -D typescript @types/express;
+```
+
+## Acknowledgement
+
+1. The **typescript-express** series on the website [wanago.io](https://wanago.io/) was hugely helpful.
