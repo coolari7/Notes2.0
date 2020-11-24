@@ -30,8 +30,8 @@ The setup is done keeping Windows in mind.
 > **PRE-REQUISITE**
 > Creating a *New Folder*, navigating into it & running ``npm init``
 
-The first step, as evidenced by the title is to setup typescript with express in our project.
-The goal is to have a ``GET /`` route as a *health check.*
+The first step, as evidenced by the title is to setup typescript with express in our project.  
+The goal is to have a ``GET /`` route as a *health check.*  
 Let's install the dependencies right away:
 
 ```javascript
