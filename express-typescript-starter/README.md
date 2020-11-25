@@ -10,7 +10,7 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 * [prettier](https://prettier.io/) for code formatting (***OPT***)
 * [jestjs](https://jestjs.io/) for unit testing
 * [supertest](https://www.npmjs.com/package/supertest) for integration testing and
-* [mongoosejs](https://mongoosejs.com/) as ORM for database
+* [mongoosejs](https://mongoosejs.com/) as ODM for database
 
 ## Disclaimer
 
@@ -32,7 +32,7 @@ The setup is done keeping Windows operating system in mind.
 
 The first step, as evidenced by the title is to setup typescript with express in our project.  
 The goal is to have a ``GET /`` route as a *health check*.  
-Let's install and setup typescript first:
+*Let us install and setup **typescript** first:*
 
 ```javascript
 npm i --D typescript;
@@ -45,7 +45,7 @@ npx tsc --init;
 ```
 
 <details>
-<summary>The usual **tsconfig** options are as follows:</summary>
+<summary>The usual <b>tsconfig</b> options are as follows:</summary>
 <p>
 
 ```javascript
@@ -108,6 +108,16 @@ Following this, we need to add a couple of scripts to ``package.json`` in order 
     "watch-ts": "tsc -w"
   }
 }
+```
+
+*Let us install and setup an **express** server now:*
+
+```javascript
+npm i express;
+```
+
+```javascript
+npm i -D @types/express;
 ```
 
 ## Acknowledgement
