@@ -14,8 +14,8 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 
 ## Disclaimer
 
-This README is heavily biased per the present knowledge and preferences of the author, and is subjected to changes over time. Users are requested to do their own research.
-The setup is done keeping Windows in mind.
+This README is heavily biased per the present knowledge and preferences of the author, and is subjected to changes over time. Users are requested to do their own research.  
+The setup is done keeping Windows operating system in mind.
 
 ## Table Of Contents
 
@@ -31,16 +31,64 @@ The setup is done keeping Windows in mind.
 > Creating a *New Folder*, navigating into it & running ``npm init``
 
 The first step, as evidenced by the title is to setup typescript with express in our project.  
-The goal is to have a ``GET /`` route as a *health check.*  
-Let's install the dependencies right away:
+The goal is to have a ``GET /`` route as a *health check*.  
+Let's install and setup typescript first:
 
 ```javascript
-npm i express;
+npm i --D typescript;
 ```
 
+Now we need a ``tsconfig.json`` file which contains compilations instructions for typescript. Create one by running:
+
 ```javascript
-npm i -D typescript @types/express;
+npx tsc --init;
 ```
+
+<details>
+<summary><b>The usual options are:</b></summary>
+<p>
+
+```javascript
+// tsconfig.json
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ES2017",
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    /* Strict Type-Checking Options */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true
+
+    /* Additional Checks */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Module Resolution Options */
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
+    /* Advanced Options */
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+
+</p>
+</details>
 
 ## Acknowledgement
 
