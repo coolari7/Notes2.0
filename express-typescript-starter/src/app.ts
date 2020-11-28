@@ -25,7 +25,7 @@ export class App {
 
   public listen(): void {
     this.app.listen(3000, () => {
-      console.log(`App is listening on PORT ${process.env.PORT}`);
+      console.log(`App is listening on PORT 3000`);
     });
   }
 }
