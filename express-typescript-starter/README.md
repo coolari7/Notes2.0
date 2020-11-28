@@ -56,7 +56,7 @@ npx tsc --init;
 ```
 
 <details>
-<summary>The usual <b>tsconfig</b> options are expanded below. For more, refer to the acknowledgements<sup>[1](#tsconfig)</sup></summary>
+<summary>The usual <b>tsconfig</b> options are expanded below.</summary>
 <p>
 
 ```javascript
@@ -100,6 +100,8 @@ npx tsc --init;
 
 </p>
 </details>
+
+For more, refer to the acknowledgements<sup>[1](#tsconfig)</sup>
 
 Following this, we need to add a couple of scripts to `package.json` in order to actually compile the typescript code written in `./src`, to javascript code & output it to `./dist`:
 
