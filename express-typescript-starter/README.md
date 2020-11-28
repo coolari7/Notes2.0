@@ -56,7 +56,7 @@ npx tsc --init;
 ```
 
 <details>
-<summary>The usual <b>tsconfig</b> options are expanded below. For more, refer to the acknowledgements[^tsconfig]</summary>
+<summary>The usual <b>tsconfig</b> options are expanded below. For more, refer to the acknowledgements<sup>[1](#tsconfig)</sup></summary>
 <p>
 
 ```javascript
@@ -131,7 +131,7 @@ npm i express;
 npm i -D @types/express;
 ```
 
-After this, set up a basic express server as illustrated in the commit [**Express Server Setup**](https://github.com/coolari7/Notes2.0/commit/f6779d6ffd113655c97bf4adc2b7f883282fda5f) or refer to the acknowledgements[^wanago]. It essentially involves the creation of 4 files:
+After this, set up a basic express server as illustrated in the commit [**Express Server Setup**](https://github.com/coolari7/Notes2.0/commit/f6779d6ffd113655c97bf4adc2b7f883282fda5f) or refer to the acknowledgements<sup>[2](#wanago)</sup>. It essentially involves the creation of 4 files:
 
 - [app.ts](https://github.com/coolari7/Notes2.0/blob/f6779d6ffd113655c97bf4adc2b7f883282fda5f/express-typescript-starter/src/app.ts) - Containing the blueprint of an express App
 - [server.ts](https://github.com/coolari7/Notes2.0/blob/f6779d6ffd113655c97bf4adc2b7f883282fda5f/express-typescript-starter/src/server.ts) - Creating an object of the class App, and listening
@@ -158,7 +158,7 @@ Add a script to the `package.json` file:
 
 The above script eliminates the need for <s>`{ "watch-ts": "tsc -w" }`</s> written earlier so kindly remove it.
 
-### Acknowledgements
+## Acknowledgements
 
-[^wanago]: The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.
-[^tsconfig]: [This medium article](https://medium.com/javascript-in-plain-english/typescript-configuration-options-tsconfig-json-561d4a2ad4b) contains exhaustive examples on **tsconfig.json** options.
+<a name="tsconfig">1.</a> [This medium article](https://medium.com/javascript-in-plain-english/typescript-configuration-options-tsconfig-json-561d4a2ad4b) contains exhaustive examples on **tsconfig.json** options.  
+<a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.
