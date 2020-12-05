@@ -1,11 +1,10 @@
-import express = require("express");
+import express, { Application } from "express";
 import { Controller } from "./controllers/controller.interface";
 
-export class App {
-  constructor(
-    controllers: Controller[],
-    public app: express.Application = express()
-  ) {
+export default class App {
+  public app: Application = express();
+
+  constructor(controllers: Controller[]) {
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
   }
@@ -25,7 +24,7 @@ export class App {
 
   public listen(): void {
     this.app.listen(3000, () => {
-      console.log(`App is listening on PORT 3000`);
+      console.log("App is listening on PORT 3000");
     });
   }
 }

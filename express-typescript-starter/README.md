@@ -30,11 +30,10 @@ The setup is done keeping Windows operating system in mind.
 
 ## Table Of Contents
 
-1. Setting up typescript with express
-2. Adding ESLint to it
-3. Adding Prettier to it
-4. Adding Jest and supertest to it
-5. Adding mongoose to it
+1. [Setting up typescript with express](#1.+SETTING+UP+TYPESCRIPT+WITH+EXPRESS)
+2. [Adding ESLint and Prettier](#2.+ADDING+ESLINT+AND+PRETTIER)
+3. Adding Jest and supertest to it
+4. Adding mongoose to it
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
 
@@ -160,7 +159,89 @@ Add a script to the `package.json` file:
 
 The above script eliminates the need for <s>`{ "watch-ts": "tsc -w" }`</s> written earlier so kindly remove it.
 
+### 2. ADDING ESLINT AND PRETTIER
+
+Linting analyses source code for errors. To get started, *let us install **eslint** first*:
+
+```javascript
+npm i -D eslint;
+```
+
+Following this installation, we need to create a ``.eslintrc.*`` configuration file. Fortunately, the ``eslint`` module we installed above comes with a CLI and an ``--init`` command:
+
+```javascript
+npx eslint --init;
+```
+
+<details>
+<summary>This will prompt a whole host of questions whose answers (**based on author's preferences**) are:</summary>
+<p>
+
+> **How would you like to use ESLINT?**  
+> To check syntax, find problems, and enforce code style  
+> **What types of modules does your project use?**  
+> JavaScript modules (import/export)  
+> **Which framework does your project use?**  
+> None of these  
+> **Does your project use TypeScript?**  
+> Yes  
+> **Where does your code run?**  
+> Node  
+> **How would you like to define a style for your project?**  
+> Use a popular style guide  
+> **Which style guide do you want to follow?**  
+> Airbnb  
+> **What format do you want your config file to be in?**  
+> JavaScript  
+
+</p>
+</details>
+
+You should now have a ``.eslintrc.js`` file in your root directory, with a few configurations. Let us now add a script to ``package.json``:
+
+```javascript
+{
+  /*
+   * The --ext flag stands for extensions. This
+   * command lints the ./src folder.
+   * --fix essentially modifies the code as per 
+   * ESLint rules
+   */
+  "lint": "eslint \"./src/**\" --fix"
+}
+```
+
+Refer to acknowledgements<sup>[4](#prettier)</sup> for understanding the need of Prettier. *Let us now add **prettier** to the project:*
+
+```javascript
+npm i -D prettier eslint-config-prettier eslint-plugin-prettier;
+```
+
+* [prettier](https://prettier.io) - core library. It is to be included in the plugins array, at the end so it can override other configs
+* [eslint-config-prettier](https://www.npmjs.com/package/eslint-config-prettier) - An eslint-config that disabled ESLint formatting rules that conflict with Prettier. Works best if used in combination of another config ([airbnb-base](https://www.npmjs.com/package/eslint-config-airbnb-base) in this case)
+* [eslint-plugin-prettier](https://www.npmjs.com/package/eslint-plugin-prettier) - An eslint-plugin that registers prettier as a plugin that essentially runs prettier as an ESLint rule, outputting formatting errors
+
+We need to make the following modification to the ``.eslintrc.js`` file:
+
+```javascript
+/*
+ * Add "plugin:prettier/recommended" to the "extends" config array
+ * at the end. This one command:
+ * 1. extends enables eslint-config-prettier to disable ESLint
+ * formatting rules
+ * 2. registers Prettier as a plugin &
+ * 3. runs Prettier formatting rules as ESLint errors.
+ */
+{
+  extends: ["airbnb-base", "plugin:prettier/recommended"]
+}
+```
+
+With this, prettier and eslint are all setup. Run ``npm run lint`` to check for **``errors``** and **``warnings``**, and adjust your ESLint rules in the rules property inside the ``.eslintrc.js`` file accordingly.
+
 ## Acknowledgements
 
 <a name="tsconfig">1.</a> [This medium article](https://medium.com/javascript-in-plain-english/typescript-configuration-options-tsconfig-json-561d4a2ad4b) contains exhaustive examples on **tsconfig.json** options.  
-<a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.
+<a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.  
+<a name="robertcooper">3.</a> Robert Cooper's [article](https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project) was instrumental in setting up ESLint with Prettier.  
+<a name="prettier">4.</a> [This short article](https://prettier.io/docs/en/comparison.html) explains the difference between the operations of Prettier and a traditional linter such as ESLint.  
