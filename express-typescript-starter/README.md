@@ -32,8 +32,8 @@ The setup is done keeping Windows operating system in mind.
 
 1. [Setting up typescript with express](#1.+SETTING+UP+TYPESCRIPT+WITH+EXPRESS)
 2. [Adding ESLint and Prettier](#2.+ADDING+ESLINT+AND+PRETTIER)
-3. Adding Jest and supertest to it
-4. Adding mongoose to it
+3. [Adding mongoose to it](#3.+ADDING+MONGODB+AND+MONGOOSE)
+4. Adding Jest and supertest to it
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
 
@@ -237,7 +237,9 @@ We need to make the following modification to the ``.eslintrc.js`` file:
 }
 ```
 
-With this, prettier and eslint are all setup. Run ``npm run lint`` to check for **``errors``** and **``warnings``**, and adjust your ESLint rules in the rules property inside the ``.eslintrc.js`` file accordingly.
+With this, prettier and eslint are all setup. Run ``npm run lint`` to check for **``errors``** and **``warnings``**, and adjust your ESLint rules in the rules property inside the ``.eslintrc.js`` file accordingly. Refer to the commit **[ESLint and Prettier Setup](https://github.com/coolari7/Notes2.0/commit/fa544d69ca0cf01fad00a7a47e19f7383e60c84b)** for details on ``package.json`` and ``.eslintrc.js``.
+
+### 3. ADDING MONGODB AND MONGOOSE
 
 ## Acknowledgements
 
