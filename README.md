@@ -15,3 +15,9 @@ Here are the guidelines:
 
 * **Notes will be in the form of README.md**
 * Unused branches will **strictly** have to be cleared.
+
+### STATUS
+
+|     Completed     |        In Progress       |       Not Started          |
+|-------------------|--------------------------|----------------------------|
+|                   |express-typescript-starter|express-typescript-decorator|
