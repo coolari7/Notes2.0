@@ -2,22 +2,25 @@
 
 ## Introduction
 
-This README is intended as a guide to set up a starter repo for a NodeJS backend using:
+This README is intended as a guide to set up a starter repo for a NodeJS backend (*without **decorators***) using:
 
 - [expressjs](https://expressjs.com/) as the web application framework
 - [typescript](https://www.typescriptlang.org/) for type safety
 - [eslint](https://eslint.org/) for linting (**_OPT_**)
 - [prettier](https://prettier.io/) for code formatting (**_OPT_**)
+- [mongoosejs](https://mongoosejs.com/) as ODM for database
 - [jestjs](https://jestjs.io/) for unit testing
 - [supertest](https://www.npmjs.com/package/supertest) for integration testing and
-- [mongoosejs](https://mongoosejs.com/) as ODM for database
 
 <details>
 <summary>Remaining:</summary>
 <p>
 
 - Logging
+- Error Handling
+- Git Hooks
 - Environment Variables
+- Package Manager (for automatic restart)
 - Deployment (Dockerfile etc.)
 
 </p>
@@ -32,7 +35,7 @@ The setup is done keeping Windows operating system in mind.
 
 1. [Setting up typescript with express](#1.+SETTING+UP+TYPESCRIPT+WITH+EXPRESS)
 2. [Adding ESLint and Prettier](#2.+ADDING+ESLINT+AND+PRETTIER)
-3. [Adding mongoose to it](#3.+ADDING+MONGODB+AND+MONGOOSE)
+3. [Adding MongoDB and Mongoose](#3.+ADDING+MONGODB+AND+MONGOOSE)
 4. Adding Jest and supertest to it
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
@@ -241,9 +244,83 @@ With this, prettier and eslint are all setup. Run ``npm run lint`` to check for 
 
 ### 3. ADDING MONGODB AND MONGOOSE
 
+For the purpose of this tutorial, mongodb is chosen as the database, and mongoose as its ODM. *Let us start by installing **mongoose**:*
+
+```javascript
+npm i mongoose;
+```
+
+```javascript
+npm i -D @types/mongoose
+```
+
+Keeping in mind the *test-ability* of applications, they are typically broken down into ***Services*** as they can be treated and tested in a standalone fashion.
+
+Let us start with creating a ``DatabaseService`` class that will establish a connectivity to the database in one of it's functions:
+
+```javascript
+// database.service.ts
+export default class DatabaseService {
+
+  // Accessor Properties
+  private dbOptions: ConnectionOptions;
+  private dbConnection: Connection;
+  
+  // Constructor
+  constructor() { }
+  
+  // Function that establishes a connection
+  // to a database
+  async connectToDatabase() {}
+}
+```
+
+Now, in our ``app.js``, the database connectivity can be established:
+
+> **Case 1: Strictly before the server's connectivity**  
+When all the routes of your application involve database connectivity, then it doesn't make sense for the server to start listening asynchronously, and establish connectivity before the database does.   
+**Case 2: Alongside the server's connectivity**  
+On the other hand, if there are some routes that serve other purposes and do not require a database connection to be present, then the server and database connectivity could be brought up asynchronously.  
+We go with **Case 1**, in this tutorial.
+
+Initialize the *DatabaseService* in ``app.js``:
+
+```javascript
+export default class App {
+  // Accessor Properties
+  private databaseService: DatabaseService;
+  
+  // Constructor
+  constructor() {
+    this.databaseService = new DatabaseService();
+  }
+}
+```
+
+Modify the ``listen()`` function to *connect to the database* **before** *listening on a PORT*:
+
+```javascript
+export default class App {
+  public listen() {
+    this.databaseService
+      .connectToDatabase()
+      .then(() => {
+        this.app.listen(this.PORT, () => {
+          console.log(`App is listening on PORT ${this.PORT}`);
+        });
+      })
+      .catch((err: Error) => {
+        console.log("Failed to establish connection to the database;");
+        console.log(err.message);
+      });
+  }
+}
+```
+
 ## Acknowledgements
 
 <a name="tsconfig">1.</a> [This medium article](https://medium.com/javascript-in-plain-english/typescript-configuration-options-tsconfig-json-561d4a2ad4b) contains exhaustive examples on **tsconfig.json** options.  
 <a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.  
 <a name="robertcooper">3.</a> Robert Cooper's [article](https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project) was instrumental in setting up ESLint with Prettier.  
 <a name="prettier">4.</a> [This short article](https://prettier.io/docs/en/comparison.html) explains the difference between the operations of Prettier and a traditional linter such as ESLint.  
+<a name="mongoose">5.</a>When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.

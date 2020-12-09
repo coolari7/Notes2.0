@@ -1,12 +1,26 @@
 import express, { Application } from "express";
 import { Controller } from "./controllers/controller.interface";
+import DatabaseService from "./services/database/database.service";
 
 export default class App {
-  public app: Application = express();
+  private PORT: number;
+  private databaseService: DatabaseService;
+  public app: Application;
 
   constructor(controllers: Controller[]) {
+    // Initialize Variables
+    this.PORT = App.getPort();
+    this.databaseService = new DatabaseService();
+    this.app = express();
+
+    // Initialize Functions
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
+  }
+
+  private static getPort(): number {
+    const { PORT } = process.env;
+    return !!PORT && /^[0-9]{3,5}$/.test(PORT) ? +PORT : 3000;
   }
 
   private initializeMiddlewares(): void {
@@ -23,8 +37,16 @@ export default class App {
   }
 
   public listen(): void {
-    this.app.listen(3000, () => {
-      console.log("App is listening on PORT 3000");
-    });
+    this.databaseService
+      .connectToDatabase()
+      .then(() => {
+        this.app.listen(this.PORT, () => {
+          console.log(`App is listening on PORT ${this.PORT}`);
+        });
+      })
+      .catch((err: Error) => {
+        console.log("Failed to connect to database");
+        console.log(err.message);
+      });
   }
 }
