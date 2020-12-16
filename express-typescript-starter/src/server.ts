@@ -1,6 +1,6 @@
 import App from "./app";
-import HealthCheckController from "./controllers/health-check/health-check.controller";
+import { HealthCheckController, UserController } from "./controllers";
 
-const app = new App([new HealthCheckController()]);
+const app = new App([new HealthCheckController(), new UserController()]);
 
 app.listen();

@@ -1,7 +1,8 @@
 import express, { Router, Request, Response } from "express";
 import { Controller } from "../controller.interface";
 
-export default class HealthCheckController implements Controller {
+// eslint-disable-next-line import/prefer-default-export
+export class HealthCheckController implements Controller {
   public router: Router = express.Router();
   public path: string = "/";
 

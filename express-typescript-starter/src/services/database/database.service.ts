@@ -1,27 +1,30 @@
-import { connect, Connection, connection, ConnectionOptions } from "mongoose";
+import { connect, connection, Connection, ConnectionOptions } from "mongoose";
 
-export default class DatabaseService {
+// eslint-disable-next-line import/prefer-default-export
+export class DatabaseService {
   private dbOptions: ConnectionOptions;
   private dbConnection: Connection;
+  private dbUri: string;
 
   constructor() {
+    const { MONGO_USER, MONGO_PASS, MONGO_HOST } = process.env;
+
+    this.dbUri = `mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}`;
     this.dbConnection = connection;
     this.dbOptions = {
       dbName: "test",
       useNewUrlParser: true,
       useFindAndModify: true,
       useUnifiedTopology: true,
+      useCreateIndex: true,
     };
     this.registerDatabaseEvents();
   }
 
   public async connectToDatabase(): Promise<void> {
-    const { MONGO_USER, MONGO_PASS, MONGO_HOST } = process.env;
-
-    await connect(
-      `mongodb+srv://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}`,
-      this.dbOptions
-    ).catch(DatabaseService.onInitialError);
+    await connect(this.dbUri, this.dbOptions).catch(
+      DatabaseService.onInitialError
+    );
   }
 
   private registerDatabaseEvents(): void {

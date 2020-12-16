@@ -29,7 +29,9 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 ## Disclaimer
 
 This README is heavily biased per the present knowledge and preferences of the author, and is subjected to changes over time. Users are requested to do their own research.  
-The setup is done keeping Windows operating system in mind.
+The setup is done keeping Windows operating system in mind.  
+  
+**WARNING:** Halfway through the preparation (*15th December, 2020*), the author realized that *mongoose is **NOT** well suited for typescript.*
 
 ## Table Of Contents
 
@@ -244,7 +246,14 @@ With this, prettier and eslint are all setup. Run ``npm run lint`` to check for 
 
 ### 3. ADDING MONGODB AND MONGOOSE
 
-For the purpose of this tutorial, mongodb is chosen as the database, and mongoose as its ODM. *Let us start by installing **mongoose**:*
+For the purpose of this tutorial, mongodb is chosen as the database, and mongoose as its ODM. This section will be covered in essentially two sub-sections:
+
+1. **Setting up database connectivity**
+2. **Working with models**
+
+#### 1. Setting up database connectivity
+
+*Let us start by installing **mongoose**:*
 
 ```javascript
 npm i mongoose;
@@ -317,10 +326,140 @@ export default class App {
 }
 ```
 
+Refer to the commit **[MongoDB Database Service and Connectivity](https://github.com/coolari7/Notes2.0/commit/69aa2cd699ff96f4cc689b1049489979626eef38)** to see the complete setup for database connectivity along with the files.
+
+#### 2. Working with models
+
+We will be working on a simple User model with **firstName**, **lastName**, **birthDate**, **email**, **password** and **username**.
+
+When it comes to working with models, keeping aside the uniqueness of each case, there are fundamentally **two** aspects to be taken into consideration (**three**, if you consider *routing* one):
+
+* the ***typescript*** aspect
+* the ***mongoose*** aspect
+
+**Why?**  
+``mongoose`` and ``typescript`` use different types, and to successfully work with both, we end up having to declare user fields in both mongoose ``Schema`` and typescript ``interface``. This results in *multiple sources of truth*, which should be avoided. Unfortunately, there is no way out of this without using a different npm package.  
+Since we'll be going ahead with multiple sources of truth, it is important for us to try and keep the sources *in sync*. This<sup>[5](#mongoose)</sup> article shows a way.  
+  
+##### *The typescript aspect:*
+
+We keep typescript and mongoose in sync, by essentially working off of a *base interface*. Let us start by creating it with the aforementioned fields:
+
+```javascript
+// IUser Base Interface
+export interface IUser {
+  firstName: String;
+  lastName: String;
+  birthDate: Date;
+  email: String;
+  password: String;
+  username: String;
+}
+```
+
+Now then, here are the two typescript definitions for the ``model()`` function (copied from ``@types/mongoose/index.d.ts``), which is ultimately used to compile a Schema into a Model:
+
+```javascript
+// Case 1
+model<T extends Document>(...args): Model<T>;
+
+// Case 2
+model<T extends Document, U extends Model<T>>(...args): U;
+```
+
+Two points:  
+
+1. As is evident above, typescript needs at least one generic to be present, and it has to be an interface extending the ``Document`` interface. Without this, intellisense will not happen.
+2. If your schema has ***virtuals / methods***, the base interface ``IUser`` will be insufficient and may cause compile-time issues (when you try and access a ***virtual*** or a ***method*** on a ``document``).  
+
+For example, if we add the following three:
+
+* ``virtual: age``
+* ``virtual: fullName``
+* ``method : sameBirthDateCount()``
+
+It calls for the creation of another interface extending the Document interface:
+
+```javascript
+export interface IUserDoc extends IUser, Document {
+  /* Virtuals */
+  age: Number;
+  fullName: String;
+  
+  /* Methods */
+  sameBirthDateCount(): Promise<Number>;
+  
+  /* If timestamps are set to true */
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+Another point:
+
+1. If your schema has ***statics***, then those needed to be added too. But not at the ``document`` level. They'll be added to the ``model``, which means that we'll have to create an interface for a model. And will be going with ``// Case 2`` up above:
+
+```javascript
+export interface IUserModel extends Model<IUserDoc> {
+  /* Statics */
+  newMonthlyUsers(): Promise<Number>;
+}
+```
+
+## Appendix I: Typescript
+
+### 1. ``index.ts`` module resolution
+
+The index.ts folder structure improves export-ability.
+
+> Typescript module resolution picks up ``index.ts`` file from folder name if it is there and try to import packages.
+
+So try and create and index.ts file with only:
+
+```javascript
+// index.ts
+export * from "./[sub-folder/...]fileName1";
+export * from "./[sub-folder/...]fileName2";
+export * from "./[sub-folder/...]fileName3";
+```
+
+Make sure that ``fileName1``, ``fileName2`` and ``fileName3`` **DO NOT** have any **``default``** exports!
+
+## Appendix II: Mongoose
+
+### 1. ``virtuals``
+
+When you (inadvertently) convert a ``document`` to a ``POJO`` (JSON object), which can happen when you send a response back to the client with the document as the body, **``virtuals``** are **NOT** included *by default*. To include them, you have to:
+
+```javascript
+// SchemaOptions
+{
+  toJSON: {
+    virtuals: true,
+  },
+}
+```
+
+### 2. ``id`` vs ``_id``
+
+As per [documentation](https://mongoosejs.com/docs/guide.html#id), mongoose adds an ``id`` **``virtual`` ``getter``**  to every document by default. This ``id`` essentially casts the ``_id`` property's value to a ``string``, on in the case of an ``ObjectId``, to its *hexString*.  
+Personal preference is that ``_id`` is enough, and ``id`` be **disabled**:
+
+```javascript
+// SchemaOptions
+{
+  id: false,
+}
+```
+
+### 3. ``select: false`` Schema - level
+
+
+
 ## Acknowledgements
 
 <a name="tsconfig">1.</a> [This medium article](https://medium.com/javascript-in-plain-english/typescript-configuration-options-tsconfig-json-561d4a2ad4b) contains exhaustive examples on **tsconfig.json** options.  
 <a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.  
 <a name="robertcooper">3.</a> Robert Cooper's [article](https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project) was instrumental in setting up ESLint with Prettier.  
 <a name="prettier">4.</a> [This short article](https://prettier.io/docs/en/comparison.html) explains the difference between the operations of Prettier and a traditional linter such as ESLint.  
-<a name="mongoose">5.</a>When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.
+<a name="mongoose">5.</a> When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.
