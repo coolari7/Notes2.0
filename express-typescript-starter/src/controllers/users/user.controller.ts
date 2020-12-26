@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from "express";
-import { Controller } from "../controller.interface";
+import { Controller } from "../interface/controller.interface";
 import { IUser, User } from "../../models";
 
 // eslint-disable-next-line import/prefer-default-export
@@ -31,15 +31,35 @@ export class UserController implements Controller {
   private static async readUser(req: Request, res: Response): Promise<void> {
     const { username } = req.params;
     try {
-      const user = await User.findOne({ username });
+      const user = await User.findOne({ username }, "+password +email");
       if (!user) {
         res.status(404).send();
         return;
       }
-      res.status(200).send(user);
+
+      /* METHOD */
+      const sameBirthDateCount = await user.sameBirthDateCount();
+
+      /* STATIC */
+      const newMonthlyUsers = await User.newMonthlyUsers();
+
+      res.status(200).send(
+        user.toJSON({
+          /* INLINE TRANSFORM */
+          transform: (_doc, ret) => {
+            const copy = ret;
+            delete copy.firstName;
+            delete copy.lastName;
+            return {
+              ...copy,
+              sameBirthDateCount,
+              newMonthlyUsers,
+            };
+          },
+        })
+      );
     } catch (error) {
       console.log(error.message);
-      console.log(error.stack);
       res.status(500).send(error);
     }
   }

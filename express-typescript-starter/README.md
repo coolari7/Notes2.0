@@ -31,7 +31,7 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 This README is heavily biased per the present knowledge and preferences of the author, and is subjected to changes over time. Users are requested to do their own research.  
 The setup is done keeping Windows operating system in mind.  
   
-**WARNING:** Halfway through the preparation (*15th December, 2020*), the author realized that *mongoose is **NOT** well suited for typescript.*
+**WARNING:** Halfway through the preparation (*15th December, 2020*), the author realized that *mongoose is **NOT** well suited for typescript.* Newer packages like ***``typegoose``*** might be better. These will be tested in *another starter pack*.
 
 ## Table Of Contents
 
@@ -265,7 +265,7 @@ npm i -D @types/mongoose
 
 Keeping in mind the *test-ability* of applications, they are typically broken down into ***Services*** as they can be treated and tested in a standalone fashion.
 
-Let us start with creating a ``DatabaseService`` class that will establish a connectivity to the database in one of it's functions:
+Let us start by creating a ``DatabaseService`` class that will establish a connectivity to the database in one of it's functions:
 
 ```javascript
 // database.service.ts
@@ -332,14 +332,16 @@ Refer to the commit **[MongoDB Database Service and Connectivity](https://github
 
 We will be working on a simple User model with **firstName**, **lastName**, **birthDate**, **email**, **password** and **username**.
 
-When it comes to working with models, keeping aside the uniqueness of each case, there are fundamentally **two** aspects to be taken into consideration (**three**, if you consider *routing* one):
+When it comes to working with models, keeping aside the uniqueness of each case, there are fundamentally **two** aspects to be taken into consideration (**three**, if you consider *routing* as an aspect):
 
 * the ***typescript*** aspect
 * the ***mongoose*** aspect
 
 **Why?**  
-``mongoose`` and ``typescript`` use different types, and to successfully work with both, we end up having to declare user fields in both mongoose ``Schema`` and typescript ``interface``. This results in *multiple sources of truth*, which should be avoided. Unfortunately, there is no way out of this without using a different npm package.  
-Since we'll be going ahead with multiple sources of truth, it is important for us to try and keep the sources *in sync*. This<sup>[5](#mongoose)</sup> article shows a way.  
+``mongoose`` and ``typescript`` use different types, and to successfully work with both, we end up having to declare user fields in both mongoose ``Schema`` and typescript ``interface``. This results in *multiple sources of truth*, which should be avoided. Unfortunately, there is no way out of this without using a different npm package (``ts-mongoose``, ``typegoose``).  
+Since we'll be going ahead with multiple sources of truth, it is important for us to try and keep the sources *in sync*. This<sup>[5](#mongoose)</sup> article shows a way.
+
+<hr>
   
 ##### *The typescript aspect:*
 
@@ -357,7 +359,7 @@ export interface IUser {
 }
 ```
 
-Now then, here are the two typescript definitions for the ``model()`` function (copied from ``@types/mongoose/index.d.ts``), which is ultimately used to compile a Schema into a Model:
+Next, take note of the two typescript definitions for the ``model()`` function (copied from ``@types/mongoose/index.d.ts``), which is ultimately used to compile a Schema into a Model:
 
 ```javascript
 // Case 1
@@ -406,6 +408,102 @@ export interface IUserModel extends Model<IUserDoc> {
 }
 ```
 
+With this in place, we can now move to the mongoose aspect.
+
+<hr>
+
+##### *The mongoose aspect:*
+
+There are two important things about the ***``mongoose``*** aspect:
+
+1. the ***``loadClass()``*** function
+2. the ***``SchemaDefinition``***
+
+The ***``loadClass()``*** function takes an ``ES6`` class as an argument and maps its:
+
+| ES6 class         | Mongoose equivalent |
+| ----------------- | ------------------- |
+| getters & setters | virtuals            |
+| methods           | methods             |
+| statics methods   | statics             |
+
+In order to keep the *multiple sources of truth in sync*, make sure that the class implements from the *base interface* **``IUser``**.
+
+```javascript
+export class UserClass implements IUser {
+  /**
+   * Define all of IUser's properties
+   * here. Use the non-null assertion
+   * operator to prevent unnecessary
+   * constructor initialization.
+   */
+   
+   /* VIRTUALS */
+   get age(): number {
+     // some code
+   }
+   
+   get fullName: number {
+     // some code
+   }
+   
+   /* METHODS */
+   public async sameBirthDateCount(): Promise<Number> {
+     // some code
+   }
+   
+   /* STATICS */
+   public static async newMonthlyUsers(): Promise<Number> {
+     // some code
+   }
+}
+```
+
+Use the above class as an argument for ``loadClass()``.
+
+> **PRECAUTION:** The **``loadClass()``** method should be called before model creation (using the **``model()``** function), or else the virtuals, methods and statics won't be loaded.
+
+The way we define the **``SchemaDefinition``** also plays a role in keeping *the multiple sources of truth in sync*. For this purpose, we use typescript's inherent utility type ``Record`` as follows:
+
+```javascript
+export const UserSchemaDefinition: Record<
+  keyof IUser, 
+  SchemaTypeOptions<any>
+> = {
+  /**
+   * Define all of IUser's properties
+   * along with their SchemaTypeOptions:
+   * {
+   *   type: String,
+   *   trim: true,
+   *   select: false,
+   * }
+   */
+}
+```
+
+The ``Record<keyof IUser, T>`` ensures that the object that follows, must have all of its keys amongst ``IUser``'s keys. **This is fundamentally how we ensure consistency between mongoose's ``Schema`` and typescript's ``interface``.** This is  also a hack at best, and it is advisable to move away from mongoose, as it does not work well with typescript.  
+  
+With these in place, we can now move on to the creation of a new Schema, followed by a Model:
+
+```javascript
+// Create the Schema
+export const UserSchema = new Schema(
+  UserSchemaDefinition, 
+  UserSchemaOptions // SchemaOptions seperated out into its own variable
+);
+
+// Load virtuals, methods & statics
+UserSchema.loadClass(UserClass);
+
+/**
+ * Define any Pre & Post Hooks here
+ */
+
+// Create the Model
+export const User = model<IUserDoc, IUserModel>("User", UserSchema); 
+```
+
 ## Appendix I: Typescript
 
 ### 1. ``index.ts`` module resolution
@@ -442,7 +540,7 @@ When you (inadvertently) convert a ``document`` to a ``POJO`` (JSON object), whi
 
 ### 2. ``id`` vs ``_id``
 
-As per [documentation](https://mongoosejs.com/docs/guide.html#id), mongoose adds an ``id`` **``virtual`` ``getter``**  to every document by default. This ``id`` essentially casts the ``_id`` property's value to a ``string``, on in the case of an ``ObjectId``, to its *hexString*.  
+As per [documentation](https://mongoosejs.com/docs/guide.html#id), mongoose adds an ``id`` **``virtual`` ``getter``**  to every document by default. This ``id`` essentially casts the ``_id`` property's value to a ``string``, or in the case of an ``ObjectId``, to its *hexString*.  
 Personal preference is that ``_id`` is enough, and ``id`` be **disabled**:
 
 ```javascript
@@ -454,7 +552,90 @@ Personal preference is that ``_id`` is enough, and ``id`` be **disabled**:
 
 ### 3. ``select: false`` Schema - level
 
+When the collection contains sensitive information such as **passwords**, it doesn't make sense to include them in the results for queries such as ``find`` or ``findOne`` etc. A Schema - level select false can help in such a situation:
 
+```javascript
+// SchemaTypeOptions
+{
+  password: {
+    type: String,
+    select: false // Makes sure that passwords are excluded
+  }
+}
+```
+
+*In some situations however*, inclusion of ``select: false`` properties might be necessary. For instance, if **passwords** are in fact needed in the query output, then:
+
+1. **EITHER** chain the query functions with a ``select()`` function
+2. **OR** provide ``projection: any`` as the *second argument* to the query function:
+
+```javascript
+// Case 1
+const user = await User.findOne({}).select("+password");
+
+// Case 2
+const user = await User.findOne({}, "+password");
+```
+
+Notice the **``"+password"``**? As per [mongoose documentation](https://mongoosejs.com/docs/api/query.html#query_Query-select):
+
+> if a path is prefixed with +, it **forces inclusion** of the path, which is useful for paths excluded at the schema level
+
+Also note this, as it is important for projections:
+
+> A projection must be **either inclusive or exclusive**. In other words, you must either list the fields to include (which excludes all others), or list the fields to exclude (which implies all other fields are included). The _id field is the only exception.
+
+### 4. ``Projections`` with ``virtuals``
+
+**Exercise caution** when using projections and virtuals together:
+
+1. As mentioned in **1. ``virtuals``** above, using ``toJSON: { virtuals: true }`` populates virtuals during **``Document.prototype.toJSON()``** method.
+2. In **express.js**, methods ``res.send()`` & ``res.json()`` convert object bodies into JSON before sending over HTTP. If the object has a ``toJSON()`` method of its own (which a mongoose ``Document`` does), that function is invoked to perform said conversion.
+3. Since **``projection``** happens before populating **``virtuals``**, **caution** is advised.
+4. If a certain property (for instance, **``birthDate``**) is **excluded** during projection, but a virtual (for instance, **``age``**) requires that property (**``birthDate``**) to be present, the **``virtual getter``** may throw an **``ERROR``** during ``toJSON()`` (provided ``virtuals: true`` is supplied), which may cause the *controller* to throw an **``ERROR``**.
+
+**Best Practices**:
+
+1. Make sure that the **``virtual getters``** are enclosed in a ``try...catch``, so as to avoid errors.
+2. Double check the projections to make sure none of them conflict with any of the virtuals.
+3. If you absolutely need to **exclude** certain properties from the response body, but need to **include** virtuals that require those properties, *use ``toJSON(options)``'s **transform** property* as mentioned below.
+
+### 4. ``transform`` in ``toJSON`` / ``toObject``
+
+Using **``transform``**, is another way of modifying the object before sending it over HTTP. For instance, it could be used to hide sensitive information by deleting it from the JSON object.  
+As per [mongoose documentation](https://mongoosejs.com/docs/api.html#document_Document-toObject), **``transform``** can be applied on a ``Schema`` level, or ``inline``.
+
+```javascript
+// Case 1: Schema Level: SchemaOptions
+{
+  toJSON: {
+    /**
+     * @param doc - the mongoose document
+     * @param ret - corresponding JSON object
+     */
+    transform: (doc, ret) => {
+      const copy = ret; // ESLint Best Practice
+      delete copy.password;
+      return copy;
+    }
+  }
+}
+```
+
+```javascript
+// Case 2: Inline
+res.status(200).send(
+  user.toJSON({
+    transform: (doc, ret) => {
+      const copy = ret;
+      delete copy.password;
+      return copy;
+    }
+  })
+)
+```
+
+Use ``// Case 2: Inline`` in conjugation with **"**``Projections`` with ``virtuals`` Best Practices - Pt. 3 **"**, to ***exclude** certain properties from the response body whilst retaining virtuals that require those properties*. Include to-be-excluded properties during projections, and delete them with an inline transform.
 
 ## Acknowledgements
 
@@ -462,4 +643,5 @@ Personal preference is that ``_id`` is enough, and ``id`` be **disabled**:
 <a name="wanago">2.</a> The [typescript-express](https://wanago.io/courses/typescript-express-tutorial/) series on the website [wanago.io](https://wanago.io/) was hugely helpful.  
 <a name="robertcooper">3.</a> Robert Cooper's [article](https://www.robertcooper.me/using-eslint-and-prettier-in-a-typescript-project) was instrumental in setting up ESLint with Prettier.  
 <a name="prettier">4.</a> [This short article](https://prettier.io/docs/en/comparison.html) explains the difference between the operations of Prettier and a traditional linter such as ESLint.  
-<a name="mongoose">5.</a> When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.
+<a name="mongoose">5.</a> When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.  
+<a>6.</a> The ``loadClass()`` function implements the ``IUser`` interface and initializes it's properties using the [non-null assertion operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-0.html#non-null-assertion-operator).  

@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from "express";
-import { Controller } from "../controller.interface";
+import { Controller } from "../interface/controller.interface";
 
 // eslint-disable-next-line import/prefer-default-export
 export class HealthCheckController implements Controller {

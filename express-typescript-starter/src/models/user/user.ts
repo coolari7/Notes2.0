@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { promisify } from "util";
 import isEmail from "validator/lib/isEmail";
-import { FilterQuery, SchemaOptions, SchemaTypeOptions } from "mongoose";
-import { capitalizeFirstCharacter, ModDate } from "../../utils";
-import { IUser, IUserDoc } from ".";
+import { SchemaOptions, SchemaTypeOptions } from "mongoose";
+import { capitalizeFirstCharacter } from "../../utils";
+import { IUser, IUserDoc, User } from ".";
 
 export class UserClass implements IUser {
   public firstName!: string;
@@ -26,25 +25,26 @@ export class UserClass implements IUser {
   }
 
   public async sameBirthDateCount(this: IUserDoc): Promise<number> {
-    return promisify<FilterQuery<IUser>, number>(
-      this.model("User").countDocuments
-    )({ birthDate: this.birthDate });
+    const count = await User.countDocuments({ birthDate: this.birthDate });
+    return count - 1;
   }
 
   public static async newMonthlyUsers(this: IUserDoc): Promise<number> {
-    const date = new ModDate();
-    return promisify<FilterQuery<IUser>, number>(
-      this.model("User").countDocuments
-    )({
+    const year = new Date().getFullYear();
+    const month = new Date().getMonth();
+    return User.countDocuments({
       $and: [
-        { createdAt: { $gte: date.getFirstDateOfTheMonth() } },
-        { createdAt: { $lt: date.getFirstDateOfNextMonth() } },
+        { createdAt: { $gte: new Date(year, month, 1) } },
+        { createdAt: { $lt: new Date(year, month + 1, 1) } },
       ],
     });
   }
 }
 
-export const UserSchemaFields: Record<keyof IUser, SchemaTypeOptions<any>> = {
+export const UserSchemaDefinition: Record<
+  keyof IUser,
+  SchemaTypeOptions<any>
+> = {
   firstName: {
     type: String,
     lowercase: true,
@@ -65,8 +65,8 @@ export const UserSchemaFields: Record<keyof IUser, SchemaTypeOptions<any>> = {
     type: String,
     required: true,
     trim: true,
-    select: false,
     unique: true,
+    select: false,
     validate: [
       (email: string) => isEmail(email),
       "Provided email is of incorrect format!",

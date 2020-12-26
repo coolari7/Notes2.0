@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import { Controller } from "./controllers/controller.interface";
+import { Controller } from "./controllers/interface/controller.interface";
 import { DatabaseService } from "./services";
 
 export default class App {
