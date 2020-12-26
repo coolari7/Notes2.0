@@ -504,6 +504,11 @@ UserSchema.loadClass(UserClass);
 export const User = model<IUserDoc, IUserModel>("User", UserSchema); 
 ```
 
+Refer to the commit **[MongoDB Working with models](https://github.com/coolari7/Notes2.0/commit/80eda361303b3a3fe35e4e4e58380451db66754b)** to see:
+
+1. the ``source code`` for everything above
+2. Routes for the User model
+
 ## Appendix I: Typescript
 
 ### 1. ``index.ts`` module resolution
