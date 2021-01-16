@@ -6,8 +6,9 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 
 - [expressjs](https://expressjs.com/) as the web application framework
 - [typescript](https://www.typescriptlang.org/) for type safety
-- [eslint](https://eslint.org/) for linting (**_OPT_**)
-- [prettier](https://prettier.io/) for code formatting (**_OPT_**)
+- [eslint](https://eslint.org/) for linting
+- [prettier](https://prettier.io/) for code formatting
+- [git hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) for ensure code quality and style consistency 
 - [mongoosejs](https://mongoosejs.com/) as ODM for database
 - [jestjs](https://jestjs.io/) for unit testing
 - [supertest](https://www.npmjs.com/package/supertest) for integration testing and
@@ -18,7 +19,6 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 
 - Logging
 - Error Handling
-- Git Hooks
 - Environment Variables
 - Package Manager (for automatic restart)
 - Deployment (Dockerfile etc.)
@@ -35,10 +35,11 @@ The setup is done keeping Windows operating system in mind.
 
 ## Table Of Contents
 
-1. [Setting up typescript with express](#1.+SETTING+UP+TYPESCRIPT+WITH+EXPRESS)
-2. [Adding ESLint and Prettier](#2.+ADDING+ESLINT+AND+PRETTIER)
-3. [Adding MongoDB and Mongoose](#3.+ADDING+MONGODB+AND+MONGOOSE)
-4. Adding Jest and supertest to it
+1. [Setting up typescript with express](#1-setting-up-typescript-with-express)
+2. [Adding ESLint and Prettier](#2-adding-eslint-and-prettier)
+3. [Setting up git hooks](#3-setting-up-git-hooks)
+4. [Adding MongoDB and Mongoose](#4-adding-mongodb-and-mongoose)
+5. Adding Jest and supertest to it
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
 
@@ -212,7 +213,7 @@ You should now have a ``.eslintrc.js`` file in your root directory, with a few c
    * --fix essentially modifies the code as per 
    * ESLint rules
    */
-  "lint": "eslint \"./src/**\" --fix"
+  "lint": "eslint ./src --ext .ts --fix"
 }
 ```
 
@@ -244,7 +245,61 @@ We need to make the following modification to the ``.eslintrc.js`` file:
 
 With this, prettier and eslint are all setup. Run ``npm run lint`` to check for **``errors``** and **``warnings``**, and adjust your ESLint rules in the rules property inside the ``.eslintrc.js`` file accordingly. Refer to the commit **[ESLint and Prettier Setup](https://github.com/coolari7/Notes2.0/commit/fa544d69ca0cf01fad00a7a47e19f7383e60c84b)** for details on ``package.json`` and ``.eslintrc.js``.
 
-### 3. ADDING MONGODB AND MONGOOSE
+**UPDATE January 15th, 2021**  
+  
+It is also recommended that you add the following script to your ``package.json`` as it will come handy when using ***git hooks***:
+
+```javascript
+{
+  "prettify": "prettier --write ./src/**/*.ts"
+}
+```
+
+### 3. SETTING UP GIT HOOKS
+
+As per documentation:
+
+> Git has a way to fire off **custom scripts** when certain important actions occur.
+
+These are hooks. Some examples are **``pre-commit``**, **``pre-push``** and **``post-merge``**. We can tap into these hooks and inject custom scripts. For instance, we could run *``eslint``* and *``prettier``* before commiting code to the repository so the repository code is always clean and readable.  
+  
+For this, we need to install two packages:
+
+1. [husky](https://www.npmjs.com/package/husky) for tapping into the git hooks
+2. [lint-staged](https://www.npmjs.com/package/lint-staged) for running a sequence of command(s) on *staged files*
+
+```javascript
+npm i -D husky lint-staged;
+```
+
+Technically, you could make do with just **``husky``**. **``Lint-staged``** comes in handy when the project is very large, and linting followed by *"prettifying"* takes a long time. In such case, linting and prettifying *just the staged files* saves a lot of time.  
+  
+Create the following two files in your root folder:
+
+```javascript
+// .huskyrc.js
+
+module.exports = {
+  "pre-commit": "lint-staged"
+}
+```
+
+```javascript
+// .lintstagedrc.js
+
+module.exports = {
+  "*.ts": [
+    "prettier --write", // Prettify the staged files
+    "eslint --fix"      // And then lint them
+  ]
+}
+```
+
+Doing this will make sure that the **``lint-staged``** command runs before commit. That command will execute the two commands: ``prettier --write`` and ``eslint --fix``.
+
+> **WARNING:** If the 2nd command fails (because ESLint CAN NOT --fix all the errors), then ***the commit will fail*** thereby preserving the code integrity of your repository.
+
+### 4. ADDING MONGODB AND MONGOOSE
 
 For the purpose of this tutorial, mongodb is chosen as the database, and mongoose as its ODM. This section will be covered in essentially two sub-sections:
 
@@ -527,6 +582,12 @@ export * from "./[sub-folder/...]fileName3";
 ```
 
 Make sure that ``fileName1``, ``fileName2`` and ``fileName3`` **DO NOT** have any **``default``** exports!
+
+### 2. ``this`` parameters
+
+When the ``--noImplicitThis`` flag is set, functions which use the ``this`` keyword are mandated to explicitly set the type for ``this``. As per [typescript documentation](https://www.typescriptlang.org/docs/handbook/functions.html#this-parameters):
+
+> To fix this, you can provide an explicit this parameter. this parameters are fake parameters that come first in the parameter list of a function
 
 ## Appendix II: Mongoose
 

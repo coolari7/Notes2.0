@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import isEmail from "validator/lib/isEmail";
 import { SchemaOptions, SchemaTypeOptions } from "mongoose";
-import { capitalizeFirstCharacter } from "../../utils";
+import { capitalizeFirstCharacter } from "../../shared";
 import { IUser, IUserDoc, User } from ".";
 
 export class UserClass implements IUser {

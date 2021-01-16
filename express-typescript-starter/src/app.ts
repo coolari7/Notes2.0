@@ -1,13 +1,14 @@
 import express, { Application } from "express";
-import { Controller } from "./controllers/interface/controller.interface";
+import { BaseController } from "./controllers";
 import { DatabaseService } from "./services";
+import { errorMiddleware } from "./shared";
 
 export default class App {
   private PORT: number;
   private databaseService: DatabaseService;
   public app: Application;
 
-  constructor(controllers: Controller[]) {
+  constructor(controllers: BaseController[]) {
     // Initialize Variables
     this.PORT = App.getPort();
     this.databaseService = new DatabaseService();
@@ -16,6 +17,7 @@ export default class App {
     // Initialize Functions
     this.initializeMiddlewares();
     this.initializeControllers(controllers);
+    this.initializeErrorHandling();
   }
 
   private static getPort(): number {
@@ -30,10 +32,14 @@ export default class App {
     );
   }
 
-  private initializeControllers(controllers: Controller[]): void {
-    controllers.forEach((controller: Controller) => {
+  private initializeControllers(controllers: BaseController[]): void {
+    controllers.forEach((controller: BaseController) => {
       this.app.use("/", controller.router);
     });
+  }
+
+  private initializeErrorHandling(): void {
+    this.app.use(errorMiddleware);
   }
 
   public listen(): void {
