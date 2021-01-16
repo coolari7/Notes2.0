@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-ts": "tsc",
     "dev": "ts-node-dev ./src/server.ts",
-    "lint": "eslint \"src/**\" --fix"
+    "lint": "eslint ./src --ext .ts --fix"
   },
   "repository": {
     "type": "git",
@@ -21,7 +21,9 @@
     "supertest",
     "node",
     "eslint",
-    "prettier"
+    "prettier",
+    "husky",
+    "lint-staged"
   ],
   "author": "Arijit Chowdhury",
   "license": "ISC",

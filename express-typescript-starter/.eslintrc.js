@@ -11,6 +11,12 @@ module.exports = {
   },
   plugins: ["@typescript-eslint"],
   rules: {
+    "prettier/prettier": [
+      "error",
+      {
+        endOfLine: "auto",
+      },
+    ],
     "import/no-unresolved": [0],
     "import/extensions": [0],
     "lines-between-class-members": [0],
