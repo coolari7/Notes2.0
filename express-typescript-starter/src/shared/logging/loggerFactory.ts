@@ -1,4 +1,9 @@
-import Logger, { createLogger, LoggerOptions, Stream } from "bunyan";
+import Logger, {
+  createLogger,
+  LoggerOptions,
+  Stream,
+  stdSerializers,
+} from "bunyan";
 import { existsSync, mkdirSync } from "fs";
 import { LogPaths, DEFAULT_LOGGER_NAME } from "..";
 import { reqSerializer, resSerializer } from "./serializers";
@@ -29,6 +34,7 @@ class LoggerFactory {
       serializers: {
         req: reqSerializer,
         res: resSerializer,
+        err: stdSerializers.err,
       },
     };
 
