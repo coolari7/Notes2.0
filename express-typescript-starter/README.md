@@ -11,13 +11,13 @@ This README is intended as a guide to set up a starter repo for a NodeJS backend
 - [git hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks) for ensure code quality and style consistency 
 - [mongoosejs](https://mongoosejs.com/) as ODM for database
 - [jestjs](https://jestjs.io/) for unit testing
-- [supertest](https://www.npmjs.com/package/supertest) for integration testing and
+- [supertest](https://www.npmjs.com/package/supertest) for integration testing
+- [bunyan](https://www.npmjs.com/package/bunyan) for logging
 
 <details>
 <summary>Remaining:</summary>
 <p>
 
-- Logging
 - Error Handling
 - Environment Variables
 - Package Manager (for automatic restart)
@@ -37,9 +37,10 @@ The setup is done keeping Windows operating system in mind.
 
 1. [Setting up typescript with express](#1-setting-up-typescript-with-express)
 2. [Adding ESLint and Prettier](#2-adding-eslint-and-prettier)
-3. [Setting up git hooks](#3-setting-up-git-hooks)
+3. [Setting up Git Hooks](#3-setting-up-git-hooks)
 4. [Adding MongoDB and Mongoose](#4-adding-mongodb-and-mongoose)
-5. Adding Jest and supertest to it
+5. [Adding Jest and supertest](#5-adding-jest-and-supertest)
+6. [Setting up Logging](#6-setting-up-logging)
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
 
@@ -564,6 +565,47 @@ Refer to the commit **[MongoDB Working with models](https://github.com/coolari7/
 1. the ``source code`` for everything above
 2. Routes for the User model
 
+### 5. ADDING JEST AND SUPERTEST
+
+### 6. SETTING UP LOGGING
+
+Logging is essential to every application. Logs help in error monitoring, security purposes and debugging. There are several logging frameworks out there. At the time of writing this section (*January 19th, 2021*), the author has chosen to go ahead with **``bunyan``**.  
+  
+Let's start by installing bunyan in our application:
+
+```javascript
+npm i bunyan;
+```
+
+```javascript
+npm i -D @types/bunyan;
+```
+
+The *Factory Design Pattern*<sup>[7](#factory)</sup> will be used for logging with bunyan, i.e. a ``LoggerFactory`` will be set up, and then ``Logger`` objects will be created from it:
+
+```javascript
+/* 
+ * /shared/logging/loggerFactory.ts 
+ */
+
+class LoggerFactory {
+  protected readonly logger: Logger;
+  
+  constructor() {
+    /* 
+     * use the createLogger() function to create
+     * a logger and assign it to the property
+     */
+  }
+  
+  getNamedLogger(source: string): Logger {
+    return this.logger.child({ source });
+  }
+}
+
+export const loggerFactory = new LoggerFactory();
+```
+
 ## Appendix I: Typescript
 
 ### 1. ``index.ts`` module resolution
@@ -711,3 +753,4 @@ Use ``// Case 2: Inline`` in conjugation with **"**``Projections`` with ``virtua
 <a name="prettier">4.</a> [This short article](https://prettier.io/docs/en/comparison.html) explains the difference between the operations of Prettier and a traditional linter such as ESLint.  
 <a name="mongoose">5.</a> When using mongoose and typescript, the database fields are duplicated between an interface and a schema. [This article](https://hackernoon.com/how-to-link-mongoose-and-typescript-for-a-single-source-of-truth-94o3uqc) gives a method to keep them in sync.  
 <a>6.</a> The ``loadClass()`` function implements the ``IUser`` interface and initializes it's properties using the [non-null assertion operator](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-0.html#non-null-assertion-operator).  
+<a name="factory">7.</a> To learn more on **Factory Design Pattern**, [click here](https://www.tutorialspoint.com/design_pattern/factory_pattern.htm).  

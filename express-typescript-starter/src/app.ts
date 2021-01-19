@@ -3,8 +3,6 @@ import { BaseController } from "./controllers";
 import { DatabaseService } from "./services";
 import { errorMiddleware } from "./shared";
 
-const useless = "Hola";
-
 export default class App {
   private PORT: number;
   private databaseService: DatabaseService;
