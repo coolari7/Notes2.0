@@ -3,13 +3,16 @@ import Logger, {
   LoggerOptions,
   Stream,
   stdSerializers,
+  LogLevelString,
 } from "bunyan";
 import { existsSync, mkdirSync } from "fs";
 import { LogPaths, DEFAULT_LOGGER_NAME } from "..";
 import { reqSerializer, resSerializer } from "./serializers";
+import deploymentEnv from "../../config/getNodeEnv";
 
 class LoggerFactory {
   protected readonly logger: Logger;
+  public readonly logLevel: LogLevelString;
 
   constructor() {
     // Create ./logs if it doesn't exist
@@ -17,9 +20,10 @@ class LoggerFactory {
       mkdirSync("logs");
     }
 
+    this.logLevel = LoggerFactory.setLogLevel();
     const streams: Stream[] = [
       {
-        level: "trace",
+        level: this.logLevel,
         stream: process.stdout,
       },
     ];
@@ -29,7 +33,7 @@ class LoggerFactory {
 
     const options: LoggerOptions = {
       name: DEFAULT_LOGGER_NAME,
-      level: "trace",
+      level: this.logLevel,
       streams,
       serializers: {
         req: reqSerializer,
@@ -39,6 +43,14 @@ class LoggerFactory {
     };
 
     this.logger = createLogger(options);
+  }
+
+  private static setLogLevel(): LogLevelString {
+    let output: LogLevelString = "trace";
+    if (["production"].includes(deploymentEnv)) {
+      output = "info";
+    }
+    return output;
   }
 
   public getNamedLogger(source: string): Logger {

@@ -41,6 +41,7 @@ The setup is done keeping Windows operating system in mind.
 4. [Adding MongoDB and Mongoose](#4-adding-mongodb-and-mongoose)
 5. [Adding Jest and supertest](#5-adding-jest-and-supertest)
 6. [Setting up Logging](#6-setting-up-logging)
+7. [Setting up environmental variable configs](#6-setting-up-environmental-variable-configs)
 
 ### 1. SETTING UP TYPESCRIPT WITH EXPRESS
 
@@ -604,6 +605,288 @@ class LoggerFactory {
 }
 
 export const loggerFactory = new LoggerFactory();
+```
+
+Check the commits **[Logging with Bunyan](https://github.com/coolari7/Notes2.0/commit/44289b0bfd6a1716f8ef3b8058559c8ff1bac30e#diff-db81104250cc0b1460a7c29568b00894f2667cc13680e86642772794fc0a35a1)** and **[Logging with Bunyan v2](https://github.com/coolari7/Notes2.0/commit/994e3738c4d05dd06a7ec0d9446a12f27d4acd45#diff-db81104250cc0b1460a7c29568b00894f2667cc13680e86642772794fc0a35a1)** to see the complete files.  
+  
+There are a three salient features for logging that need to be mentioned:  
+  
+##### 1. Serializers:
+
+[Serializers](https://www.npmjs.com/package/bunyan#serializers) are functions that return a **JSON-able** subset of a **JavaScript** object. For instance, they can be used to return a subset of the ``req`` object, containing only ``req.url``, ``req.method`` & ``req.headers``. **``Bunyan``** has it's own standard serializers for ``req``, ``res`` and ``err``. We make use of the ``err`` standard serializer and make our own for ``req`` and ``res`` objects.  
+  
+##### 2. Logs Folder:
+
+In addition to outputting the logs on the console, it is also considered best practice to output them to a file or an endpoint in order to be collected and monitored. In **``Bunyan``**, this can be accomplished with the ``streams`` key.
+
+```javascript
+/*
+ * THIS IS JUST AN EXAMPLE!!
+ * Check the commits for actual
+ * implementation!
+ */
+const options: LoggerOptions = {
+  streams: [
+    {
+      level: "error",
+      path: "./logs/error.log",
+    },
+    {
+      /*
+       * THIS OBJECT IS NECESSARY. If the streams array has all
+       * objects with 'path' key, and no 'stream' key, then there
+       * won't be any console logging.
+       */
+      level: "debug",
+      stream: process.stdout,
+    },
+  ],
+};
+```
+
+##### 3. Logging Middleware:
+
+It is recommended that we add a middleware to log all the incoming requests. This can easily be done in express as so:
+
+```javascript
+// /shared/middlewares/loggingMiddleware.ts
+
+const logger = loggerFactory.getNamedLogger("Request");
+
+export function loggingMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) {
+  logger.info({ req });
+  next()
+}
+```
+
+Now then, here is how you use the logger:
+
+```javascript
+/*
+ * Modification of app.ts from the previous commits
+ */
+export class App {
+  private readonly logger: Logger;
+  
+  constructor() {
+    // Get Logger
+    this.logger = loggerFactory.getNamedLogger("App");
+  }
+  
+  public listen() {
+    // Use logger
+    this.databaseService
+      .connectToDatabase()
+      .then(() => {
+        this.app.listen(this.PORT, () => {
+          this.logger.info(`App is listening on PORT ${this.PORT}`);
+        });
+      })
+      .catch((err: Error) => {
+        this.logger.error("Failed to establish connection to the database;");
+        this.logger.error(err.message);
+      });
+  }
+}
+```
+
+One more thing to note. By default, bunyan outputs logs in JSON format which are great for processing, but difficult to read. Fortunately, bunyan providesa **``CLI``** that eases out this:
+
+```javascript
+// Modify package.json
+
+{
+  "dev": "ts-node-dev ./src/server.ts | bunyan"
+}
+```
+
+### 7. SETTING UP ENVIRONMENT VARIABLE CONFIGS
+
+It is common knowledge that sensitive data such as **usernames** and **passwords** should be saved in environment variables. In this context, *environment* refers to as the system's environment.  
+  
+However, in this section, we will be talking about the *environment* that refers to a stage in the software development cycle, i.e. **``dev``**, **``it``** or **``prod``**. We will be talking about data that is not sensitive, and yet differs from environment to environment. Usually, such configurations are put in an appropriately named **``/config``** folder.
+
+> **NOTE:** There are several different ways to incorporate config in a backend API. The method shown here is based on the user's preference, and will likely change in the future with more expertise.
+
+Create the **``/config``** folder under **``./src``**. As per the user's preference, the different stages are **development**, **testing**, **staging** and **production**. It is best to create a type for the very same:
+
+```javascript
+/* src/shared/types/deploymentEnvironments.ts */
+
+export type DEPLOYMENT_ENVIRONMENT =
+  | "development"
+  | "testing"
+  | "staging"
+  | "production";
+```
+
+It is also in the best interest for us to create another interface for storing the layout of the **environment-dependent** data. For instance, if the application's database is MongoDB and there are 4 different connection strings for 4 different deployment environments, then the interface could be:
+
+```javascript
+/* src/shared/types/databaseConfig.ts */
+
+export interface DatabaseConfig {
+  hostnames: string;
+  databaseName: string;
+  port: number;
+  replicasetName?: string;
+}
+```
+
+**Username** and **Password** could be stored within environment variables.  
+  
+Next, create a subfolder called **``/environments``** inside **``/config``**. The exports from the files inside this **``environments``** folder should be named after the ``DEPLOYMENT_ENVIRONMENTS`` types as follows:
+
+```javascript
+/* /environments/development.ts */
+
+// Variable must be named "development" exactly
+export const development: DatabaseConfig = {
+  hostnames: "dev-hostname",
+  databaseName: "dev-DBName",
+  port: 27017,
+  replicasetName: "dev-RPLSTName",
+}
+```
+
+Similarly, files for **testing**, **staging** and **production** must be created:
+
+```javascript
+/* /environments/testing.ts */
+
+// Variable must be named "testing" exactly
+export const testing: DatabaseConfig = {
+  hostnames: "test-hostname",
+  databaseName: "test-DBName",
+  port: 27017,
+  replicasetName: "test-RPLSTName",
+}
+```
+
+```javascript
+/* /environments/staging.ts */
+
+// Variable must be named "staging" exactly
+export const staging: DatabaseConfig = {
+  hostnames: "stage-hostname",
+  databaseName: "stage-DBName",
+  port: 27017,
+  replicasetName: "stage-RPLSTName",
+}
+```
+
+```javascript
+/* /environments/production.ts */
+
+// Variable must be named "production" exactly
+export const production: DatabaseConfig = {
+  hostnames: "prod-hostname",
+  databaseName: "prod-DBName",
+  port: 27017,
+  replicasetName: "prod-RPLSTName",
+}
+```
+
+Also, it is perhaps in the best interest of safety to create a **``defaults.ts``** file in case the application is being run locally:
+
+```javascript
+/* /environments/defaults.ts */
+
+// Variable must be named "defaults" exactly
+export const defaults: DatabaseConfig = {
+  hostnames: "localhost",
+  databaseName: "test",
+  port: 27017,
+}
+```
+
+Make sure to create an **``index.ts``** file inside **``/environments``** folder exporting all the other files.  
+Now that we have the non-sensitive data ready and separated into different folders, we need a way to ascertain during runtime which deployment environment is the application running in.  
+  
+Enter **NODE_ENV**  
+  
+NODE_ENV is an environment variable in NodeJS that is used to signify the runtime deployment environment. These days, it is automatically set through different CICD pipelines. Anyway, we need a safe way to get it's value (because it can be ``undefined``). So:
+
+```javascript
+/* Create a file called /config/getNodeEnv.ts. This file
+ * will contain a function that'll give us the NODE_ENV
+ * value at runtime. Instead of importing the function &
+ * running it multiple times to obtain the deployment-env,
+ * we export a const containing the value (evaluated only
+ * once, so slight improvement in performance).
+ */
+
+function getNodeEnv(): DEPLOYMENT_ENVIRONMENT | "defaults" {
+  let deploymentEnv = process.env.NODE_ENV;
+
+  if (deploymentEnv !== undefined) {
+    deploymentEnv = deploymentEnv.toLowerCase();
+    if (/dev/i.test(deploymentEnv)) {
+      deploymentEnv = "development";
+    } else if (/test/i.test(deploymentEnv)) {
+      deploymentEnv = "testing";
+    } else if (/stag/i.test(deploymentEnv)) {
+      deploymentEnv = "staging";
+    } else if (/prod/i.test(deploymentEnv)) {
+      deploymentEnv = "production";
+    } else {
+      deploymentEnv = "defaults";
+    }
+  } else {
+    deploymentEnv = "defaults";
+  }
+
+  return deploymentEnv as DEPLOYMENT_ENVIRONMENT | "defaults";
+}
+
+const deploymentEnv = getNodeEnv();
+export default deploymentEnv;
+```
+
+The penultimate step would be to create an **``index.ts``** file inside the **``/config``** folder containing the actual logic:
+
+```javascript
+/* /config/index.ts */
+
+import * as configs from "./environments";
+import deploymentEnv from "./getNodeEnv";
+
+const config = configs[deploymentEnv];
+
+export { config };
+```
+
+Everything is now ready. Whenever the configs are needed (in this case, during database connections), this folder can be imported and the configs will be available.
+
+**IMPORTANT**  
+The **deploymentEnv** value can be used to modify the **loggerFactory**. Logs should be outputted as per deployment environment. ***Production*** logs should not have **``trace``**, or **``debug``** logs in it. This can be achieved using the **``getNodeEnv.ts``** file:
+
+```javascript
+/* Modify existing loggerFactory class by implementing a 
+ * static setLogLevel function:
+ */
+
+class LoggerFactory {
+  public readonly logLevel: LogLevelString;
+  
+  constructor() {
+    this.logLevel = LoggerFactory.setLogLevel();
+    // Update levels for stdout and LoggerOptions
+    // Set level: this.logLevel;
+  }
+  
+  private static setLogLevel(): LogLevelString {
+    let output: LogLevelString = "trace";
+    if (["production"].includes(deploymentEnv)) { // Import from /src/config
+      output = "info"
+    }
+    return output;
+  }
+}
 ```
 
 ## Appendix I: Typescript

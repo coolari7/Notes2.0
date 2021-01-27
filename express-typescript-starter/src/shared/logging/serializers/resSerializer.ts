@@ -6,8 +6,10 @@ export function resSerializer(res: Response) {
     return res;
   }
   const { statusCode, statusMessage } = res;
+  const headers = res.getHeaders();
   return {
     statusCode,
     statusMessage,
+    headers,
   };
 }

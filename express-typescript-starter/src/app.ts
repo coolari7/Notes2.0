@@ -1,7 +1,7 @@
 import express, { Application } from "express";
 import { BaseController } from "./controllers";
 import { DatabaseService } from "./services";
-import { errorMiddleware } from "./shared";
+import { errorMiddleware, loggingMiddleware } from "./shared";
 
 export default class App {
   private PORT: number;
@@ -30,6 +30,7 @@ export default class App {
     this.app.use(
       express.urlencoded({ extended: true, limit: "10kb", parameterLimit: 5 })
     );
+    this.app.use(loggingMiddleware);
   }
 
   private initializeControllers(controllers: BaseController[]): void {

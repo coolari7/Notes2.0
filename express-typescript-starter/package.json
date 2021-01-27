@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build-ts": "tsc",
-    "dev": "ts-node-dev ./src/server.ts",
+    "dev": "ts-node-dev ./src/server.ts | bunyan",
     "lint": "eslint ./src --ext .ts --fix",
     "prettify": "prettier --write ./src/**/*.ts"
   },
